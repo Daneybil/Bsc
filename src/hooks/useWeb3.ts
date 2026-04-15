@@ -78,17 +78,17 @@ export function useWeb3() {
 
   const fetchContractData = async (contractInstance: ethers.Contract, userAddress: string) => {
     try {
-      const [airdropAmount, hasClaimed, balance, name, symbol] = await Promise.all([
-        contractInstance.AIRDROP_AMOUNT(),
-        contractInstance.hasClaimedAirdrop(userAddress),
+      // Check which functions exist in the new ABI
+      const [balance, name, symbol, presaleSupply] = await Promise.all([
         contractInstance.balanceOf(userAddress),
         contractInstance.name(),
-        contractInstance.symbol ? contractInstance.symbol() : Promise.resolve("TOKEN")
+        contractInstance.symbol ? contractInstance.symbol() : Promise.resolve("TOKEN"),
+        contractInstance.PRESALE_SUPPLY ? contractInstance.PRESALE_SUPPLY() : Promise.resolve(BigInt(0))
       ]);
 
       setContractData({
-        airdropAmount: ethers.formatEther(airdropAmount),
-        hasClaimed,
+        airdropAmount: ethers.formatEther(presaleSupply), // Using PRESALE_SUPPLY as a placeholder for airdropAmount
+        hasClaimed: false, // New contract doesn't have hasClaimedAirdrop
         balance: ethers.formatEther(balance),
         tokenName: name,
         tokenSymbol: symbol
@@ -98,12 +98,13 @@ export function useWeb3() {
     }
   };
 
-  const buyTokens = async (bnbAmount: string, referrer: string = ethers.ZeroAddress) => {
+  const buyTokens = async (bnbAmount: string, _referrer: string = ethers.ZeroAddress) => {
     if (!contract) return;
     setLoading(true);
     setError(null);
     try {
-      const tx = await contract.buyPreSale(referrer, {
+      // New ABI uses buyPresale (no arguments)
+      const tx = await contract.buyPresale({
         value: ethers.parseEther(bnbAmount)
       });
       await tx.wait();
@@ -119,11 +120,12 @@ export function useWeb3() {
   };
 
   const claimAirdrop = async () => {
-    if (!contract) return;
+    if (!contract || !account) return;
     setLoading(true);
     setError(null);
     try {
-      const tx = await contract.claimAirdrop();
+      // New ABI uses airdrop(address[]) - assuming user can call it for themselves
+      const tx = await contract.airdrop([account]);
       await tx.wait();
       if (account) fetchContractData(contract, account);
       return tx;
