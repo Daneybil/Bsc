@@ -144,6 +144,7 @@ export default function App() {
                         value={buyAmount}
                         onChange={(e) => setBuyAmount(e.target.value)}
                         placeholder="0.1"
+                        step="any"
                         className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                       />
                       <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
